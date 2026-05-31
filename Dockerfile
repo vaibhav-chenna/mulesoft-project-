@@ -3,8 +3,8 @@ FROM eclipse-temurin:17-jdk-alpine
 
 # Set environment variables
 ENV MULE_HOME=/opt/mule \
-    MULE_VERSION=4.4.0 \
-    APP_PORT=8081
+    MULE_VERSION=4.8.0 \
+    APP_PORT=8086
 
 # Install required packages
 RUN apk update && apk add --no-cache curl bash unzip tar
@@ -27,7 +27,7 @@ RUN mkdir -p $MULE_HOME/apps
 COPY target/*.jar $MULE_HOME/apps/ 2>/dev/null || true
 
 # Expose the application port
-EXPOSE 8081
+EXPOSE ${APP_PORT}
 
 WORKDIR $MULE_HOME
 
