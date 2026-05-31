@@ -14,7 +14,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <mule.maven.plugin.version>4.1.1</mule.maven.plugin.version>
-        <mule.version>4.8.0</mule.version>
+        <mule.version>4.4.0</mule.version>
         <cloudhub.username>${env.CLOUDHUB_USERNAME}</cloudhub.username>
         <cloudhub.password>${env.CLOUDHUB_PASSWORD}</cloudhub.password>
         <cloudhub.applicationName>ai-support-api</cloudhub.applicationName>
@@ -45,7 +45,7 @@
                         <workerType>${cloudhub.workerType}</workerType>
                         <properties>
                             <env>prod</env>
-                            <http.port>8081</http.port>
+                            <http.port>${PORT}</http.port>
                         </properties>
                     </cloudHubDeployment>
                 </configuration>
@@ -115,7 +115,7 @@
             <version>2.4.0</version>
             <classifier>mule-plugin</classifier>
         </dependency>
-
+             
         <!-- Test Dependencies -->
         <dependency>
             <groupId>org.mule.tests</groupId>
