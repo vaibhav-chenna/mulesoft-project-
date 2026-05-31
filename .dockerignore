@@ -1,0 +1,41 @@
+# Git
+.git
+.gitignore
+.github
+
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+*.iml
+.DS_Store
+
+# Build artifacts (but not target/*.jar)
+target/classes/
+target/test-classes/
+target/test-mule/
+target/META-INF/
+target/repository/
+target/.m2/
+
+# Documentation
+docs/
+README.md
+*.md
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Other
+.env
+.env.local
+.qodo/
+.mule/

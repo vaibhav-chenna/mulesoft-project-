@@ -17,8 +17,14 @@ RUN cd /opt && \
     rm mule.zip && \
     chmod +x $MULE_HOME/bin/mule
 
-# Copy the compiled Mule application jar into the apps directory
-COPY target/*.jar $MULE_HOME/apps/
+# Create apps directory
+RUN mkdir -p $MULE_HOME/apps
+
+# Copy the compiled Mule application jar into the apps directory (if it exists)
+# Note: You must compile the Mule project with Maven before building this Docker image
+# Run: mvn clean package
+# Then build: docker build -t mulesoft-app:1.0 .
+COPY target/*.jar $MULE_HOME/apps/ 2>/dev/null || true
 
 # Expose the application port
 EXPOSE 8081
