@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns="http://www.mulesoft.org/schema/mule/core"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xmlns:http="http://www.mulesoft.org/schema/mule/http"
+      xmlns:apikit="http://www.mulesoft.org/schema/mule/apikit"
+      xsi:schemaLocation="
+      http://www.mulesoft.org/schema/mule/core 
+      http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+      http://www.mulesoft.org/schema/mule/http 
+      http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+      http://www.mulesoft.org/schema/mule/apikit 
+      http://www.mulesoft.org/schema/mule/apikit/current/mule-apikit.xsd">
+
+    <!-- HTTP Listener Configuration for CloudHub -->
+    <http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config">
+        <http:listener-connection host="0.0.0.0" port="${http.port}"/>
+    </http:listener-config>
+
+    <!-- HTTP Request Configuration for outbound calls -->
+    <http:request-config name="HTTP_Request_config" doc:name="HTTP Request config">
+        <http:request-connection host="httpbin.org" />
+    </http:request-config>
+
+    <!-- APIKit Configuration -->
+    <apikit:config name="api-config" raml="api/support-experience-api.raml" 
+                   outboundHeadersMapName="outboundHeaders" 
+                   httpStatusVarName="httpStatus" doc:name="API Config"/>
+
+    <!-- Global Error Handler -->
+    <error-handler name="Global_Error_Handler" doc:name="Global Error Handler">
+        <on-error-propagate type="APIKIT_NOT_FOUND" doc:name="On Error Propagate">
+            <set-payload value="#[output application/json --- {errorCode: 'NOT_FOUND', errorMessage: 'Resource not found', timestamp: now() as String {format: 'yyyy-MM-dd HH:mm:ss'}, requestId: vars.requestId}]" doc:name="Set 404 Payload"/>
+            <set-variable variableName="httpStatus" value="404" doc:name="Set Status 404"/>
+        </on-error-propagate>
+        <on-error-propagate type="APIKIT_BAD_REQUEST" doc:name="On Error Propagate">
+            <set-payload value="#[output application/json --- {errorCode: 'INVALID_REQUEST', errorMessage: 'Invalid request format', timestamp: now() as String {format: 'yyyy-MM-dd HH:mm:ss'}, requestId: vars.requestId}]" doc:name="Set 400 Payload"/>
+            <set-variable variableName="httpStatus" value="400" doc:name="Set Status 400"/>
+        </on-error-propagate>
+        <on-error-propagate doc:name="On Error Propagate">
+            <set-payload value="#[output application/json --- {errorCode: 'INTERNAL_ERROR', errorMessage: error.description, timestamp: now() as String {format: 'yyyy-MM-dd HH:mm:ss'}, requestId: vars.requestId}]" doc:name="Set 500 Payload"/>
+            <set-variable variableName="httpStatus" value="500" doc:name="Set Status 500"/>
+        </on-error-propagate>
+    </error-handler>
+
+</mule>

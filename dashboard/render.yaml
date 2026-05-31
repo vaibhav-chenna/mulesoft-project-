@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: ai-support-dashboard-api
+    env: node
+    plan: free
+    buildCommand: npm ci && npm run build
+    startCommand: npm run api:cloud
+    envVars:
+      - key: NODE_VERSION
+        value: 22
+      - key: PUBLIC_READ_ONLY
+        value: true

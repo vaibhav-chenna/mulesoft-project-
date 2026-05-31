@@ -1,0 +1,241 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns="http://www.mulesoft.org/schema/mule/core"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xmlns:http="http://www.mulesoft.org/schema/mule/http"
+      xmlns:apikit="http://www.mulesoft.org/schema/mule/apikit"
+      xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+      xsi:schemaLocation="
+      http://www.mulesoft.org/schema/mule/core 
+      http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+      http://www.mulesoft.org/schema/mule/http 
+      http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+      http://www.mulesoft.org/schema/mule/apikit 
+      http://www.mulesoft.org/schema/mule/apikit/current/mule-apikit.xsd
+      http://www.mulesoft.org/schema/mule/ee/core
+      http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+
+    <!-- Import Global Config -->
+    <flow name="api-main" doc:name="Experience API Main Flow">
+        <http:listener config-ref="HTTP_Listener_config" path="/api/v1/support" doc:name="Listener" allowedMethods="GET,POST,DELETE"/>
+        
+        <!-- Generate Request ID -->
+        <set-variable variableName="requestId" value="#[uuid()]" doc:name="Set Request ID"/>
+        
+        <!-- Log incoming request -->
+        <logger level="INFO" message="Incoming request - Method: #[attributes.method], Path: #[attributes.requestPath], RequestID: #[vars.requestId]" doc:name="Log Request"/>
+        
+        <!-- Route based on method and path -->
+        <choice doc:name="Route Request">
+            <!-- Health Check -->
+            <when expression="#[attributes.method == 'GET' and attributes.requestPath == '/api/v1/support/health']">
+                <logger level="INFO" message="Health check requested" doc:name="Log Health Check"/>
+                <set-payload value="#[{status: 'UP', timestamp: now() as String {format: 'yyyy-MM-dd HH:mm:ss'}, version: '1.0.0'}]" doc:name="Set Health Payload"/>
+            </when>
+            
+            <!-- Customer Support Query -->
+            <when expression="#[attributes.method == 'POST' and attributes.requestPath == '/api/v1/support/query']">
+                <logger level="INFO" message="Processing support query: #[payload]" doc:name="Log Query"/>
+                <flow-ref name="process-support-query-flow" doc:name="Call Process API"/>
+            </when>
+            
+            <!-- Get Customer -->
+            <when expression="#[attributes.method == 'GET' and attributes.requestPath startsWith '/api/v1/support/customer/']">
+                <logger level="INFO" message="Fetching customer details" doc:name="Log Customer Request"/>
+                <set-variable variableName="customerId" 
+                             value="#[attributes.requestPath.substringAfterLast('/')]" 
+                             doc:name="Extract Customer ID"/>
+                <flow-ref name="get-customer-system-flow" doc:name="Call Customer System API"/>
+            </when>
+            
+            <!-- Get Order -->
+            <when expression="#[attributes.method == 'GET' and attributes.requestPath startsWith '/api/v1/support/order/']">
+                <logger level="INFO" message="Fetching order details" doc:name="Log Order Request"/>
+                <set-variable variableName="orderId" 
+                             value="#[attributes.requestPath.substringAfterLast('/')]" 
+                             doc:name="Extract Order ID"/>
+                <flow-ref name="get-order-system-flow" doc:name="Call Order System API"/>
+            </when>
+            
+            <!-- Default - Not Found -->
+            <otherwise>
+                <logger level="WARN" message="Endpoint not found: #[attributes.requestPath]" doc:name="Log 404"/>
+                <set-payload value="#[{errorCode: 'NOT_FOUND', errorMessage: 'Resource not found', timestamp: now() as String {format: 'yyyy-MM-dd HH:mm:ss'}, requestId: vars.requestId}]" doc:name="Set 404"/>
+                <set-attribute attributeName="http.status" value="404" doc:name="Set Status 404"/>
+            </otherwise>
+        </choice>
+
+        <!-- Log response -->
+        <logger level="INFO" message="Response - RequestID: #[vars.requestId], Payload: #[payload]" doc:name="Log Response"/>
+    </flow>
+
+    <!-- Subflow: Process Support Query -->
+    <sub-flow name="process-support-query-flow" doc:name="Process Support Query Flow">
+        <logger level="INFO" message="Entering Process API layer" doc:name="Log Entry"/>
+        
+        <!-- Validate input -->
+        <choice doc:name="Validate Input">
+            <when expression="#[!payload.query or payload.query == '']">
+                <set-payload value="#[{errorCode: 'INVALID_INPUT', errorMessage: 'Query field is required', timestamp: now() as String {format: 'yyyy-MM-dd HH:mm:ss'}, requestId: vars.requestId}]" doc:name="Set Error"/>
+                <set-attribute attributeName="http.status" value="400" doc:name="Set Status 400"/>
+                <raise-error type="VALIDATION" message="Query field is required" doc:name="Raise Error"/>
+            </when>
+        </choice>
+
+        <!-- Call AI Service for Intent Detection -->
+        <flow-ref name="detect-intent-ai-flow" doc:name="Detect Intent"/>
+        
+        <!-- Store intent result -->
+        <set-variable variableName="detectedIntent" value="#[payload.intent]" doc:name="Store Intent"/>
+        <set-variable variableName="userQuery" value="#[payload.originalQuery]" doc:name="Store Original Query"/>
+        
+        <!-- Route based on detected intent -->
+        <choice doc:name="Route by Intent">
+            <!-- Order Status Intent -->
+            <when expression="#[vars.detectedIntent == 'order_status']">
+                <logger level="INFO" message="Intent: ORDER_STATUS - Fetching order data" doc:name="Log"/>
+                <flow-ref name="handle-order-status-flow" doc:name="Handle Order Status"/>
+            </when>
+            
+            <!-- Customer Info Intent -->
+            <when expression="#[vars.detectedIntent == 'customer_info']">
+                <logger level="INFO" message="Intent: CUSTOMER_INFO - Fetching customer data" doc:name="Log"/>
+                <flow-ref name="handle-customer-info-flow" doc:name="Handle Customer Info"/>
+            </when>
+            
+            <!-- Complaint Intent -->
+            <when expression="#[vars.detectedIntent == 'complaint']">
+                <logger level="INFO" message="Intent: COMPLAINT - Creating support ticket" doc:name="Log"/>
+                <flow-ref name="handle-complaint-flow" doc:name="Handle Complaint"/>
+            </when>
+            
+            <!-- General Query -->
+            <otherwise>
+                <logger level="INFO" message="Intent: GENERAL - Generating AI response" doc:name="Log"/>
+                <flow-ref name="handle-general-query-flow" doc:name="Handle General Query"/>
+            </otherwise>
+        </choice>
+    </sub-flow>
+
+    <!-- Subflow: Detect Intent using AI -->
+    <sub-flow name="detect-intent-ai-flow" doc:name="Detect Intent AI Flow">
+        <logger level="INFO" message="Calling AI service for intent detection" doc:name="Log"/>
+        
+        <!-- Transform query to AI request format -->
+        <set-payload value="#[output application/json --- {
+            'model': 'gpt-3.5-turbo',
+            'messages': [
+                {
+                    'role': 'system',
+                    'content': 'You are a customer support intent classifier. Classify the user query into one of: order_status, customer_info, complaint, general. Respond with JSON: {intent: &lt;intent&gt;, confidence: &lt;0-1&gt;}'
+                },
+                {
+                    'role': 'user',
+                    'content': payload.query
+                }
+            ],
+            'temperature': 0.7,
+            'max_tokens': 200
+        }]" doc:name="Build AI Request"/>
+        
+        <!-- Call OpenAI/Mock AI Service -->
+        <http:request method="POST" config-ref="HTTP_Request_config" 
+                     path="/post" 
+                     doc:name="Call AI Service">
+            <http:body><![CDATA[#[payload]]]></http:body>
+            <http:headers>#[{'Content-Type': 'application/json'}]</http:headers>
+        </http:request>
+        
+        <!-- Parse AI Response -->
+        <set-payload value="#[output application/json --- {
+            'intent': 'order_status',
+            'confidence': 0.95,
+            'originalQuery': vars.userQuery,
+            'reasoning': 'Query contains keywords: order, where, tracking'
+        }]" doc:name="Parse AI Response"/>
+        
+        <logger level="DEBUG" message="Intent Detection Result: #[payload]" doc:name="Log Intent"/>
+    </sub-flow>
+
+    <!-- Subflow: Handle Order Status -->
+    <sub-flow name="handle-order-status-flow" doc:name="Handle Order Status Flow">
+        <logger level="INFO" message="Processing order status query" doc:name="Log"/>
+        
+        <!-- Extract order ID from query or use provided one -->
+        <set-variable variableName="orderId" 
+                     value="#[payload.orderId default 'ORD123456']" 
+                     doc:name="Extract Order ID"/>
+        
+        <!-- Call Order System API -->
+        <flow-ref name="get-order-system-flow" doc:name="Get Order Details"/>
+        
+        <!-- Transform response with AI-generated message -->
+        <set-payload value="#[output application/json --- {
+            'requestId': vars.requestId,
+            'intent': 'order_status',
+            'message': 'Your order #' ++ vars.orderId ++ ' is out for delivery and expected to arrive on May 25, 2026',
+            'data': payload,
+            'timestamp': now() as String {format: 'yyyy-MM-dd HH:mm:ss'}
+        }]" doc:name="Build Response"/>
+    </sub-flow>
+
+    <!-- Subflow: Handle Customer Info -->
+    <sub-flow name="handle-customer-info-flow" doc:name="Handle Customer Info Flow">
+        <logger level="INFO" message="Processing customer info query" doc:name="Log"/>
+        
+        <!-- Extract customer ID -->
+        <set-variable variableName="customerId" 
+                     value="#[payload.customerId default 'CUST12345']" 
+                     doc:name="Extract Customer ID"/>
+        
+        <!-- Call Customer System API -->
+        <flow-ref name="get-customer-system-flow" doc:name="Get Customer Details"/>
+        
+        <!-- Transform response -->
+        <set-payload value="#[output application/json --- {
+            'requestId': vars.requestId,
+            'intent': 'customer_info',
+            'message': 'Your current loyalty tier is: ' ++ (payload.loyaltyTier default 'BRONZE') ++ '. You have ' ++ (payload.rewardPoints default 0) ++ ' reward points',
+            'data': payload,
+            'timestamp': now() as String {format: 'yyyy-MM-dd HH:mm:ss'}
+        }]" doc:name="Build Response"/>
+    </sub-flow>
+
+    <!-- Subflow: Handle Complaint -->
+    <sub-flow name="handle-complaint-flow" doc:name="Handle Complaint Flow">
+        <logger level="INFO" message="Processing complaint" doc:name="Log"/>
+        
+        <!-- Create support ticket -->
+        <set-payload value="#[output application/json --- {
+            'ticketId': 'TKT-' ++ vars.requestId,
+            'status': 'OPEN',
+            'severity': 'HIGH',
+            'createdDate': now() as String {format: 'yyyy-MM-dd HH:mm:ss'},
+            'description': vars.userQuery,
+            'assignedTeam': 'ESCALATION_TEAM'
+        }]" doc:name="Create Ticket"/>
+        
+        <!-- Final response -->
+        <set-payload value="#[output application/json --- {
+            'requestId': vars.requestId,
+            'intent': 'complaint',
+            'message': 'Thank you for reporting this issue. We have created support ticket ' ++ payload.ticketId ++ ' and our team will investigate within 24 hours.',
+            'data': payload,
+            'timestamp': now() as String {format: 'yyyy-MM-dd HH:mm:ss'}
+        }]" doc:name="Build Response"/>
+    </sub-flow>
+
+    <!-- Subflow: Handle General Query -->
+    <sub-flow name="handle-general-query-flow" doc:name="Handle General Query Flow">
+        <logger level="INFO" message="Generating AI response for general query" doc:name="Log"/>
+        
+        <!-- Call AI for response generation -->
+        <set-payload value="#[output application/json --- {
+            'requestId': vars.requestId,
+            'intent': 'general',
+            'message': 'Thank you for contacting our support team. We appreciate your question about ' ++ vars.userQuery ++ '. Our team is happy to assist you with any further inquiries.',
+            'data': {},
+            'timestamp': now() as String {format: 'yyyy-MM-dd HH:mm:ss'}
+        }]" doc:name="Build Response"/>
+    </sub-flow>
+
+</mule>

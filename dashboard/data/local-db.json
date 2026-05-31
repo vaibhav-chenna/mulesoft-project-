@@ -1,0 +1,409 @@
+{
+  "customers": [
+    {
+      "id": "CUST-001",
+      "name": "Vaibhav Kumar",
+      "email": "vaibhav@example.com",
+      "phone": "+1-555-0101",
+      "loyaltyTier": "GOLD",
+      "rewardPoints": 5000,
+      "totalSpending": 249.99,
+      "isActive": true
+    },
+    {
+      "id": "CUST-002",
+      "name": "Sarah Johnson",
+      "email": "sarah.j@example.com",
+      "phone": "+1-555-0102",
+      "loyaltyTier": "SILVER",
+      "rewardPoints": 2500,
+      "totalSpending": 189.5,
+      "isActive": true
+    },
+    {
+      "id": "CUST-003",
+      "name": "Mike Chen",
+      "email": "mike.chen@example.com",
+      "phone": "+1-555-0103",
+      "loyaltyTier": "BRONZE",
+      "rewardPoints": 800,
+      "totalSpending": 599.99,
+      "isActive": true
+    }
+  ],
+  "orders": [
+    {
+      "orderId": "ORD-5521",
+      "customerId": "CUST-001",
+      "orderDate": "2026-05-20",
+      "totalAmount": 249.99,
+      "status": "SHIPPED",
+      "itemsCount": 3,
+      "trackingNumber": "TRACK-1001",
+      "expectedDelivery": "2026-05-25",
+      "items": [
+        {
+          "productName": "Wireless Headphones",
+          "quantity": 1,
+          "price": 129.99
+        },
+        {
+          "productName": "Phone Case",
+          "quantity": 2,
+          "price": 29.99
+        },
+        {
+          "productName": "Screen Protector",
+          "quantity": 1,
+          "price": 60
+        }
+      ]
+    },
+    {
+      "orderId": "ORD-5522",
+      "customerId": "CUST-002",
+      "orderDate": "2026-05-19",
+      "totalAmount": 189.5,
+      "status": "DELIVERED",
+      "itemsCount": 2,
+      "trackingNumber": "TRACK-1002",
+      "expectedDelivery": "2026-05-22",
+      "items": [
+        {
+          "productName": "USB Cable",
+          "quantity": 3,
+          "price": 9.99
+        },
+        {
+          "productName": "Power Bank",
+          "quantity": 1,
+          "price": 159.53
+        }
+      ]
+    },
+    {
+      "orderId": "ORD-5523",
+      "customerId": "CUST-003",
+      "orderDate": "2026-05-18",
+      "totalAmount": 599.99,
+      "status": "PROCESSING",
+      "itemsCount": 1,
+      "trackingNumber": "TRACK-1003",
+      "expectedDelivery": "2026-05-28",
+      "items": [
+        {
+          "productName": "Smart Watch",
+          "quantity": 1,
+          "price": 599.99
+        }
+      ]
+    }
+  ],
+  "queries": [
+    {
+      "id": "Q-1780212325060",
+      "query": "Where is order ORD-5521?",
+      "customerId": "CUST-001",
+      "intent": "order_status",
+      "status": "resolved",
+      "message": "Order ORD-5521 is SHIPPED. Tracking number TRACK-1001, expected delivery 2026-05-25.",
+      "data": {
+        "orderId": "ORD-5521",
+        "customerId": "CUST-001",
+        "orderDate": "2026-05-20",
+        "totalAmount": 249.99,
+        "status": "SHIPPED",
+        "itemsCount": 3,
+        "trackingNumber": "TRACK-1001",
+        "expectedDelivery": "2026-05-25",
+        "items": [
+          {
+            "productName": "Wireless Headphones",
+            "quantity": 1,
+            "price": 129.99
+          },
+          {
+            "productName": "Phone Case",
+            "quantity": 2,
+            "price": 29.99
+          },
+          {
+            "productName": "Screen Protector",
+            "quantity": 1,
+            "price": 60
+          }
+        ]
+      },
+      "timestamp": "2026-05-31T07:25:25.059Z"
+    },
+    {
+      "id": "Q-1780212325039",
+      "query": "What is my loyalty status?",
+      "customerId": "CUST-001",
+      "intent": "customer_info",
+      "status": "resolved",
+      "message": "Vaibhav Kumar is on the GOLD tier with 5000 reward points.",
+      "data": {
+        "id": "CUST-001",
+        "name": "Vaibhav Kumar",
+        "email": "vaibhav@example.com",
+        "phone": "+1-555-0101",
+        "loyaltyTier": "GOLD",
+        "rewardPoints": 5000,
+        "totalSpending": 249.99,
+        "isActive": true
+      },
+      "timestamp": "2026-05-31T07:25:25.035Z"
+    },
+    {
+      "id": "Q-1780211332246",
+      "query": "whats my order ?",
+      "customerId": "CUST-001",
+      "intent": "order_status",
+      "status": "resolved",
+      "message": "Order ORD-5521 is SHIPPED. Tracking number TRACK-1001, expected delivery 2026-05-25.",
+      "data": {
+        "orderId": "ORD-5521",
+        "customerId": "CUST-001",
+        "orderDate": "2026-05-20",
+        "totalAmount": 249.99,
+        "status": "SHIPPED",
+        "itemsCount": 3,
+        "trackingNumber": "TRACK-1001",
+        "expectedDelivery": "2026-05-25",
+        "items": [
+          {
+            "productName": "Wireless Headphones",
+            "quantity": 1,
+            "price": 129.99
+          },
+          {
+            "productName": "Phone Case",
+            "quantity": 2,
+            "price": 29.99
+          },
+          {
+            "productName": "Screen Protector",
+            "quantity": 1,
+            "price": 60
+          }
+        ]
+      },
+      "timestamp": "2026-05-31T07:08:52.246Z"
+    },
+    {
+      "id": "Q-1780211319711",
+      "query": "okay tell me my name",
+      "customerId": "CUST-001",
+      "intent": "general",
+      "status": "resolved",
+      "message": "Thanks for contacting support. I saved your query and a support agent can review it if needed.",
+      "data": {},
+      "timestamp": "2026-05-31T07:08:39.711Z"
+    },
+    {
+      "id": "Q-1779730685058",
+      "query": "tell me about my order",
+      "customerId": "CUST-001",
+      "intent": "order_status",
+      "status": "resolved",
+      "message": "Order ORD-5521 is SHIPPED. Tracking number TRACK-1001, expected delivery 2026-05-25.",
+      "data": {
+        "orderId": "ORD-5521",
+        "customerId": "CUST-001",
+        "orderDate": "2026-05-20",
+        "totalAmount": 249.99,
+        "status": "SHIPPED",
+        "itemsCount": 3,
+        "trackingNumber": "TRACK-1001",
+        "expectedDelivery": "2026-05-25",
+        "items": [
+          {
+            "productName": "Wireless Headphones",
+            "quantity": 1,
+            "price": 129.99
+          },
+          {
+            "productName": "Phone Case",
+            "quantity": 2,
+            "price": 29.99
+          },
+          {
+            "productName": "Screen Protector",
+            "quantity": 1,
+            "price": 60
+          }
+        ]
+      },
+      "timestamp": "2026-05-25T17:38:05.058Z"
+    },
+    {
+      "id": "Q-1779730614454",
+      "query": "hi tell me my order",
+      "customerId": "CUST-001",
+      "intent": "order_status",
+      "status": "resolved",
+      "message": "Order ORD-5521 is SHIPPED. Tracking number TRACK-1001, expected delivery 2026-05-25.",
+      "data": {
+        "orderId": "ORD-5521",
+        "customerId": "CUST-001",
+        "orderDate": "2026-05-20",
+        "totalAmount": 249.99,
+        "status": "SHIPPED",
+        "itemsCount": 3,
+        "trackingNumber": "TRACK-1001",
+        "expectedDelivery": "2026-05-25",
+        "items": [
+          {
+            "productName": "Wireless Headphones",
+            "quantity": 1,
+            "price": 129.99
+          },
+          {
+            "productName": "Phone Case",
+            "quantity": 2,
+            "price": 29.99
+          },
+          {
+            "productName": "Screen Protector",
+            "quantity": 1,
+            "price": 60
+          }
+        ]
+      },
+      "timestamp": "2026-05-25T17:36:54.453Z"
+    },
+    {
+      "id": "Q-1779730530935",
+      "query": "Where is order ORD-5521?",
+      "customerId": "CUST-001",
+      "intent": "order_status",
+      "status": "resolved",
+      "message": "Order ORD-5521 is SHIPPED. Tracking number TRACK-1001, expected delivery 2026-05-25.",
+      "data": {
+        "orderId": "ORD-5521",
+        "customerId": "CUST-001",
+        "orderDate": "2026-05-20",
+        "totalAmount": 249.99,
+        "status": "SHIPPED",
+        "itemsCount": 3,
+        "trackingNumber": "TRACK-1001",
+        "expectedDelivery": "2026-05-25",
+        "items": [
+          {
+            "productName": "Wireless Headphones",
+            "quantity": 1,
+            "price": 129.99
+          },
+          {
+            "productName": "Phone Case",
+            "quantity": 2,
+            "price": 29.99
+          },
+          {
+            "productName": "Screen Protector",
+            "quantity": 1,
+            "price": 60
+          }
+        ]
+      },
+      "timestamp": "2026-05-25T17:35:30.935Z"
+    }
+  ],
+  "conversations": [
+    {
+      "sessionId": "smoke",
+      "customerId": "CUST-001",
+      "role": "user",
+      "content": "Where is order ORD-5521?",
+      "timestamp": "2026-05-25T17:35:30.935Z"
+    },
+    {
+      "sessionId": "smoke",
+      "customerId": "CUST-001",
+      "role": "assistant",
+      "content": "Order ORD-5521 is SHIPPED. Tracking number TRACK-1001, expected delivery 2026-05-25.",
+      "timestamp": "2026-05-25T17:35:30.935Z"
+    },
+    {
+      "sessionId": "session_1779730605841",
+      "customerId": "CUST-001",
+      "role": "user",
+      "content": "hi tell me my order",
+      "timestamp": "2026-05-25T17:36:54.453Z"
+    },
+    {
+      "sessionId": "session_1779730605841",
+      "customerId": "CUST-001",
+      "role": "assistant",
+      "content": "Order ORD-5521 is SHIPPED. Tracking number TRACK-1001, expected delivery 2026-05-25.",
+      "timestamp": "2026-05-25T17:36:54.453Z"
+    },
+    {
+      "sessionId": "session_1779730674252",
+      "customerId": "CUST-001",
+      "role": "user",
+      "content": "tell me about my order",
+      "timestamp": "2026-05-25T17:38:05.058Z"
+    },
+    {
+      "sessionId": "session_1779730674252",
+      "customerId": "CUST-001",
+      "role": "assistant",
+      "content": "Order ORD-5521 is SHIPPED. Tracking number TRACK-1001, expected delivery 2026-05-25.",
+      "timestamp": "2026-05-25T17:38:05.058Z"
+    },
+    {
+      "sessionId": "session_1780211311215",
+      "customerId": "CUST-001",
+      "role": "user",
+      "content": "okay tell me my name",
+      "timestamp": "2026-05-31T07:08:39.711Z"
+    },
+    {
+      "sessionId": "session_1780211311215",
+      "customerId": "CUST-001",
+      "role": "assistant",
+      "content": "Thanks for contacting support. I saved your query and a support agent can review it if needed.",
+      "timestamp": "2026-05-31T07:08:39.711Z"
+    },
+    {
+      "sessionId": "session_1780211311215",
+      "customerId": "CUST-001",
+      "role": "user",
+      "content": "whats my order ?",
+      "timestamp": "2026-05-31T07:08:52.246Z"
+    },
+    {
+      "sessionId": "session_1780211311215",
+      "customerId": "CUST-001",
+      "role": "assistant",
+      "content": "Order ORD-5521 is SHIPPED. Tracking number TRACK-1001, expected delivery 2026-05-25.",
+      "timestamp": "2026-05-31T07:08:52.246Z"
+    },
+    {
+      "customerId": "CUST-001",
+      "role": "user",
+      "content": "What is my loyalty status?",
+      "timestamp": "2026-05-31T07:25:25.035Z"
+    },
+    {
+      "customerId": "CUST-001",
+      "role": "assistant",
+      "content": "Vaibhav Kumar is on the GOLD tier with 5000 reward points.",
+      "timestamp": "2026-05-31T07:25:25.035Z"
+    },
+    {
+      "customerId": "CUST-001",
+      "role": "user",
+      "content": "Where is order ORD-5521?",
+      "timestamp": "2026-05-31T07:25:25.059Z"
+    },
+    {
+      "customerId": "CUST-001",
+      "role": "assistant",
+      "content": "Order ORD-5521 is SHIPPED. Tracking number TRACK-1001, expected delivery 2026-05-25.",
+      "timestamp": "2026-05-31T07:25:25.059Z"
+    }
+  ]
+}

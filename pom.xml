@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
+         http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.techm.support</groupId>
+    <artifactId>ai-support-api</artifactId>
+    <version>1.0.0</version>
+    <packaging>mule-application</packaging>
+    <name>AI-Powered Customer Support API</name>
+    <description>MuleSoft API-led connectivity with AI integration for customer support</description>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <mule.maven.plugin.version>4.1.1</mule.maven.plugin.version>
+        <mule.version>4.8.0</mule.version>
+        <cloudhub.username>${env.CLOUDHUB_USERNAME}</cloudhub.username>
+        <cloudhub.password>${env.CLOUDHUB_PASSWORD}</cloudhub.password>
+        <cloudhub.applicationName>ai-support-api</cloudhub.applicationName>
+        <cloudhub.environment>Production</cloudhub.environment>
+        <cloudhub.region>us-east-1</cloudhub.region>
+        <cloudhub.workers>1</cloudhub.workers>
+        <cloudhub.workerType>SMALL</cloudhub.workerType>
+    </properties>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.mule.tools.maven</groupId>
+                <artifactId>mule-maven-plugin</artifactId>
+                <version>${mule.maven.plugin.version}</version>
+                <extensions>true</extensions>
+                <configuration>
+                    <runtimeVersion>${mule.version}</runtimeVersion>
+                    <cloudHubDeployment>
+                        <uri>https://anypoint.mulesoft.com</uri>
+                        <muleVersion>${mule.version}</muleVersion>
+                        <username>${cloudhub.username}</username>
+                        <password>${cloudhub.password}</password>
+                        <applicationName>${cloudhub.applicationName}</applicationName>
+                        <environment>${cloudhub.environment}</environment>
+                        <region>${cloudhub.region}</region>
+                        <workers>${cloudhub.workers}</workers>
+                        <workerType>${cloudhub.workerType}</workerType>
+                        <properties>
+                            <env>prod</env>
+                            <http.port>8081</http.port>
+                        </properties>
+                    </cloudHubDeployment>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+    <repositories>
+        <repository>
+            <id>mulesoft-releases</id>
+            <name>MuleSoft Releases Repository</name>
+            <url>https://repository.mulesoft.org/nexus/content/repositories/releases/</url>
+            <layout>default</layout>
+        </repository>
+        <repository>
+            <id>mulesoft-public</id>
+            <name>MuleSoft Public Repository</name>
+            <url>https://repository.mulesoft.org/nexus/content/repositories/public/</url>
+            <layout>default</layout>
+        </repository>
+    </repositories>
+
+    <pluginRepositories>
+        <pluginRepository>
+            <id>mulesoft-releases</id>
+            <name>MuleSoft Releases Repository</name>
+            <url>https://repository.mulesoft.org/nexus/content/repositories/releases/</url>
+            <layout>default</layout>
+        </pluginRepository>
+        <pluginRepository>
+            <id>mulesoft-public</id>
+            <name>MuleSoft Public Repository</name>
+            <url>https://repository.mulesoft.org/nexus/content/repositories/public/</url>
+            <layout>default</layout>
+        </pluginRepository>
+    </pluginRepositories>
+
+    <dependencies>
+        <!-- Mule Core -->
+        <dependency>
+            <groupId>org.mule.runtime</groupId>
+            <artifactId>mule-core</artifactId>
+            <version>${mule.version}</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- HTTP Connector -->
+        <dependency>
+            <groupId>org.mule.connectors</groupId>
+            <artifactId>mule-http-connector</artifactId>
+            <version>1.8.0</version>
+            <classifier>mule-plugin</classifier>
+        </dependency>
+
+        <!-- APIKit Router -->
+        <dependency>
+            <groupId>org.mule.modules</groupId>
+            <artifactId>mule-apikit-module</artifactId>
+            <version>1.8.0</version>
+            <classifier>mule-plugin</classifier>
+        </dependency>
+
+        <!-- JSON Module -->
+        <dependency>
+            <groupId>org.mule.modules</groupId>
+            <artifactId>mule-json-module</artifactId>
+            <version>2.4.0</version>
+            <classifier>mule-plugin</classifier>
+        </dependency>
+
+        <!-- Test Dependencies -->
+        <dependency>
+            <groupId>org.mule.tests</groupId>
+            <artifactId>mule-tests-functional</artifactId>
+            <version>${mule.version}</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+</project>

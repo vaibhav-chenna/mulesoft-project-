@@ -1,0 +1,74 @@
+# Default Git ignore patterns
+.classpath
+.project
+.settings/
+bin/
+target/
+.DS_Store
+*.class
+*.jar
+*.war
+*.ear
+*.log
+node_modules/
+.idea/
+*.swp
+*.swo
+*~
+.env
+.env.local
+.vscode/
+*.iml
+.gradle/
+build/
+
+# MuleSoft specific
+.studio/
+anypointStudio.log
+*.mule
+.mule/
+repository/
+
+# Maven
+.m2/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+release.properties
+
+# IDE
+.DS_Store
+.AppleDouble
+.LSOverride
+*.sublime-project
+*.sublime-workspace
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Node
+npm-debug.log
+yarn-error.log
+
+# Secrets (IMPORTANT!)
+.env
+.env.*.local
+secrets.yml
+config/secure-properties.properties
+
+# CloudHub
+cloudformation/outputs/
+
+# Build outputs
+dist/
+out/
+build/
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# API Gateway
+api_gateway.yml
+serverless.yml

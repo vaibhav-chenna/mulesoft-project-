@@ -1,0 +1,80 @@
+{
+  "customers": [
+    {
+      "id": "CUST-001",
+      "name": "Vaibhav Kumar",
+      "email": "vaibhav@example.com",
+      "phone": "+1-555-0101",
+      "loyaltyTier": "GOLD",
+      "rewardPoints": 5000,
+      "totalSpending": 249.99,
+      "isActive": true
+    },
+    {
+      "id": "CUST-002",
+      "name": "Sarah Johnson",
+      "email": "sarah.j@example.com",
+      "phone": "+1-555-0102",
+      "loyaltyTier": "SILVER",
+      "rewardPoints": 2500,
+      "totalSpending": 189.5,
+      "isActive": true
+    },
+    {
+      "id": "CUST-003",
+      "name": "Mike Chen",
+      "email": "mike.chen@example.com",
+      "phone": "+1-555-0103",
+      "loyaltyTier": "BRONZE",
+      "rewardPoints": 800,
+      "totalSpending": 599.99,
+      "isActive": true
+    }
+  ],
+  "orders": [
+    {
+      "orderId": "ORD-5521",
+      "customerId": "CUST-001",
+      "orderDate": "2026-05-20",
+      "totalAmount": 249.99,
+      "status": "SHIPPED",
+      "itemsCount": 3,
+      "trackingNumber": "TRACK-1001",
+      "expectedDelivery": "2026-05-25",
+      "items": [
+        { "productName": "Wireless Headphones", "quantity": 1, "price": 129.99 },
+        { "productName": "Phone Case", "quantity": 2, "price": 29.99 },
+        { "productName": "Screen Protector", "quantity": 1, "price": 60 }
+      ]
+    },
+    {
+      "orderId": "ORD-5522",
+      "customerId": "CUST-002",
+      "orderDate": "2026-05-19",
+      "totalAmount": 189.5,
+      "status": "DELIVERED",
+      "itemsCount": 2,
+      "trackingNumber": "TRACK-1002",
+      "expectedDelivery": "2026-05-22",
+      "items": [
+        { "productName": "USB Cable", "quantity": 3, "price": 9.99 },
+        { "productName": "Power Bank", "quantity": 1, "price": 159.53 }
+      ]
+    },
+    {
+      "orderId": "ORD-5523",
+      "customerId": "CUST-003",
+      "orderDate": "2026-05-18",
+      "totalAmount": 599.99,
+      "status": "PROCESSING",
+      "itemsCount": 1,
+      "trackingNumber": "TRACK-1003",
+      "expectedDelivery": "2026-05-28",
+      "items": [
+        { "productName": "Smart Watch", "quantity": 1, "price": 599.99 }
+      ]
+    }
+  ],
+  "queries": [],
+  "conversations": []
+}

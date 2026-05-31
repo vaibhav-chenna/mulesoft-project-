@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http"
+    xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+    xmlns="http://www.mulesoft.org/schema/mule/core"
+    xmlns:doc="http://www.mulesoft.org/schema/mule/doc"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+
+    <!-- ====================================================== -->
+    <!-- ADVANCED AI CONVERSATION ENGINE -->
+    <!-- ====================================================== -->
+    <flow name="advanced-ai-conversation" doc:id="advanced-ai-conv-flow">
+        <logger level="INFO" message="Starting advanced AI conversation: #[payload.query]" doc:id="log-conv-start" />
+
+        <!-- Step 1: Retrieve conversation history -->
+        <flow-ref name="get-conversation-history" doc:name="Get History" doc:id="ref-get-history">
+            <flow-ref-entry-point-attributes>
+                <flow-ref-payload value="#[payload.sessionId]" />
+            </flow-ref-entry-point-attributes>
+        </flow-ref>
+        <set-variable value="#[payload]" name="conversationHistory" doc:name="Store History" doc:id="set-history-var" />
+
+        <!-- Step 2: Enhanced intent detection with context awareness -->
+        <ee:transform doc:name="Build AI Prompt with Context" doc:id="transform-ai-prompt">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+    currentQuery: payload.query,
+    customerId: payload.customerId,
+    sessionId: payload.sessionId,
+    conversationContext: vars.conversationHistory,
+    systemPrompt: "You are an advanced customer support AI. Analyze the current query in context of the conversation history. 
+                   Detect intent (order_status, customer_info, complaint, return, general). 
+                   Extract relevant entities (order IDs, customer info, etc).
+                   Provide personalized, context-aware responses.",
+    temperature: 0.7,
+    maxTokens: 500
+}]]></ee:set-payload>
+                </ee:message>
+        </ee:transform>
+
+        <!-- Step 3: Call AI service -->
+        <flow-ref name="call-ai-service" doc:name="Call AI Engine" doc:id="ref-call-ai" />
+        <set-variable value="#[payload]" name="aiResponse" doc:name="Store AI Response" doc:id="set-ai-response-var" />
+
+        <!-- Step 4: Enrich response with database data -->
+        <choice doc:name="Route by Intent" doc:id="choice-intent-route">
+            <when expression="#[vars.aiResponse.intent == 'order_status' &amp;&amp; vars.aiResponse.orderId != null]">
+                <flow-ref name="get-order-from-db" doc:name="Fetch Order Data" doc:id="ref-get-order-db">
+                    <flow-ref-entry-point-attributes>
+                        <flow-ref-payload value="#[vars.aiResponse.orderId]" />
+                    </flow-ref-entry-point-attributes>
+                </flow-ref>
+                <set-variable value="#[payload]" name="orderData" doc:name="Store Order Data" doc:id="set-order-data-var" />
+            </when>
+            <when expression="#[vars.aiResponse.intent == 'customer_info' &amp;&amp; payload.customerId != null]">
+                <flow-ref name="get-customer-from-db" doc:name="Fetch Customer Data" doc:id="ref-get-customer-db">
+                    <flow-ref-entry-point-attributes>
+                        <flow-ref-payload value="#[payload.customerId]" />
+                    </flow-ref-entry-point-attributes>
+                </flow-ref>
+                <set-variable value="#[payload]" name="customerData" doc:name="Store Customer Data" doc:id="set-customer-data-var" />
+            </when>
+        </choice>
+
+        <!-- Step 5: Personalize response -->
+        <ee:transform doc:name="Personalize AI Response" doc:id="transform-personalize">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+    id: now() as String ++ uuid(),
+    sessionId: payload.sessionId,
+    customerId: payload.customerId,
+    query: payload.query,
+    intent: vars.aiResponse.intent,
+    message: vars.aiResponse.message,
+    data: if (vars.orderData != null) vars.orderData else if (vars.customerData != null) vars.customerData else null,
+    confidence: vars.aiResponse.confidence,
+    timestamp: now()
+}]]></ee:set-payload>
+                </ee:message>
+        </ee:transform>
+
+        <!-- Step 6: Save to database -->
+        <flow-ref name="save-support-query-db" doc:name="Save Query to DB" doc:id="ref-save-query-db" />
+        <flow-ref name="save-conversation-history" doc:name="Save to History" doc:id="ref-save-history">
+            <flow-ref-entry-point-attributes>
+                <flow-ref-payload value="#[{
+                    sessionId: payload.sessionId,
+                    customerId: payload.customerId,
+                    role: 'user',
+                    content: payload.query
+                }]" />
+            </flow-ref-entry-point-attributes>
+        </flow-ref>
+        <flow-ref name="save-conversation-history" doc:name="Save AI Response to History" doc:id="ref-save-ai-history">
+            <flow-ref-entry-point-attributes>
+                <flow-ref-payload value="#[{
+                    sessionId: payload.sessionId,
+                    customerId: payload.customerId,
+                    role: 'assistant',
+                    content: payload.message
+                }]" />
+            </flow-ref-entry-point-attributes>
+        </flow-ref>
+
+        <logger level="INFO" message="AI conversation completed. Intent: #[vars.aiResponse.intent]" doc:id="log-conv-end" />
+    </flow>
+
+</mule>

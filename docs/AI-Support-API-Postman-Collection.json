@@ -1,0 +1,255 @@
+{
+  "info": {
+    "_postman_id": "ai-support-api-collection",
+    "name": "AI-Powered Customer Support API",
+    "description": "Postman collection for testing the AI-Powered Customer Support API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health Check",
+      "item": [
+        {
+          "name": "Get API Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/support/health",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "support", "health"]
+            },
+            "description": "Check if API is running and healthy"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Support Queries",
+      "item": [
+        {
+          "name": "Query - Order Status",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"Where is my order?\",\n  \"customerId\": \"CUST12345\",\n  \"context\": \"Regarding order placed on 2026-05-20\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/support/query",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "support", "query"]
+            },
+            "description": "Submit a query about order status"
+          },
+          "response": []
+        },
+        {
+          "name": "Query - Customer Info",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"What is my loyalty tier and reward points?\",\n  \"customerId\": \"CUST67890\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/support/query",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "support", "query"]
+            },
+            "description": "Submit a query about customer information"
+          },
+          "response": []
+        },
+        {
+          "name": "Query - Complaint",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"I received a damaged package\",\n  \"customerId\": \"CUST11111\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/support/query",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "support", "query"]
+            },
+            "description": "Submit a complaint"
+          },
+          "response": []
+        },
+        {
+          "name": "Query - General",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"How do I track my shipment?\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/support/query",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "support", "query"]
+            },
+            "description": "Submit a general query"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Customer API",
+      "item": [
+        {
+          "name": "Get Customer - CUST12345",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/support/customer/CUST12345",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "support", "customer", "CUST12345"]
+            },
+            "description": "Get customer details by ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Customer - CUST67890",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/support/customer/CUST67890",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "support", "customer", "CUST67890"]
+            },
+            "description": "Get customer details by ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Customer - CUST11111",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/support/customer/CUST11111",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "support", "customer", "CUST11111"]
+            },
+            "description": "Get customer details by ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Customer - Not Found",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/support/customer/INVALID123",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "support", "customer", "INVALID123"]
+            },
+            "description": "Try to get non-existent customer (should return 404)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Order API",
+      "item": [
+        {
+          "name": "Get Order - ORD123456",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/support/order/ORD123456",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "support", "order", "ORD123456"]
+            },
+            "description": "Get order details by ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Order - ORD654321",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/support/order/ORD654321",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "support", "order", "ORD654321"]
+            },
+            "description": "Get order details by ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Order - ORD999999",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/support/order/ORD999999",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "support", "order", "ORD999999"]
+            },
+            "description": "Get order details by ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Order - Not Found",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/support/order/INVALID999",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "support", "order", "INVALID999"]
+            },
+            "description": "Try to get non-existent order (should return 404)"
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8081",
+      "type": "string"
+    }
+  ]
+}

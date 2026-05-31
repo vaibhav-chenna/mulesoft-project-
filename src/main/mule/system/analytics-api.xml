@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http"
+    xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+    xmlns="http://www.mulesoft.org/schema/mule/core"
+    xmlns:doc="http://www.mulesoft.org/schema/mule/doc"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+
+    <!-- ====================================================== -->
+    <!-- ANALYTICS AND REPORTING ENDPOINTS -->
+    <!-- ====================================================== -->
+
+    <!-- GET: /api/v1/support/analytics/stats -->
+    <flow name="get-analytics-stats" doc:id="analytics-stats-flow">
+        <http:listener config-ref="HTTP_Listener" path="/api/v1/support/analytics/stats" allowedMethods="GET" doc:name="Analytics Stats Endpoint" doc:id="listener-analytics-stats" />
+        
+        <!-- Verify credentials -->
+        <flow-ref name="verify-client-credentials" doc:name="Verify Credentials" doc:id="ref-verify-creds" />
+
+        <!-- Query analytics -->
+        <flow-ref name="get-analytics-data" doc:name="Get Analytics Data" doc:id="ref-get-analytics" />
+
+        <!-- Calculate statistics -->
+        <ee:transform doc:name="Calculate Statistics" doc:id="transform-calc-stats">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+    totalQueries: (payload map $.totalQueries) sumBy (x) -> x default 0,
+    resolvedQueries: (payload map $.resolvedQueries) sumBy (x) -> x default 0,
+    avgResolutionTime: (payload map $.avgResolutionTime) sumBy (x) -> x default 0 / (sizeOf(payload) default 1),
+    satisfactionRate: ((payload map $.satisfactionRate) sumBy (x) -> x default 0) / (sizeOf(payload) default 1)
+}]]></ee:set-payload>
+                </ee:message>
+        </ee:transform>
+
+        <http:response doc:name="Success Response" doc:id="response-stats">
+            <http:body>#[payload]</http:body>
+        </http:response>
+    </flow>
+
+    <!-- GET: /api/v1/support/analytics/trends -->
+    <flow name="get-analytics-trends" doc:id="analytics-trends-flow">
+        <http:listener config-ref="HTTP_Listener" path="/api/v1/support/analytics/trends" allowedMethods="GET" doc:name="Analytics Trends Endpoint" doc:id="listener-analytics-trends" />
+        
+        <flow-ref name="verify-client-credentials" doc:name="Verify Credentials" doc:id="ref-verify-creds-trends" />
+        <flow-ref name="get-analytics-data" doc:name="Get Trends Data" doc:id="ref-get-trends" />
+
+        <ee:transform doc:name="Format Trends" doc:id="transform-format-trends">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload map {
+    date: $.date,
+    queries: $.totalQueries,
+    resolved: $.resolvedQueries,
+    avgTime: $.avgResolutionTime
+}]]></ee:set-payload>
+                </ee:message>
+        </ee:transform>
+
+        <http:response>
+            <http:body>#[payload]</http:body>
+        </http:response>
+    </flow>
+
+    <!-- GET: /api/v1/support/analytics/intents -->
+    <flow name="get-analytics-intents" doc:id="analytics-intents-flow">
+        <http:listener config-ref="HTTP_Listener" path="/api/v1/support/analytics/intents" allowedMethods="GET" doc:name="Analytics Intents Endpoint" doc:id="listener-analytics-intents" />
+        
+        <flow-ref name="verify-client-credentials" doc:name="Verify Credentials" doc:id="ref-verify-creds-intents" />
+
+        <!-- Mock intent distribution data -->
+        <ee:transform doc:name="Build Intent Distribution" doc:id="transform-intent-dist">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+[
+    { name: "Order Status", value: 45 },
+    { name: "Customer Info", value: 25 },
+    { name: "Complaint", value: 15 },
+    { name: "Return Request", value: 10 },
+    { name: "General Query", value: 5 }
+]]]></ee:set-payload>
+                </ee:message>
+        </ee:transform>
+
+        <http:response>
+            <http:body>#[payload]</http:body>
+        </http:response>
+    </flow>
+
+    <!-- GET: /api/v1/support/queries/recent -->
+    <flow name="get-recent-queries" doc:id="recent-queries-flow">
+        <http:listener config-ref="HTTP_Listener" path="/api/v1/support/queries/recent" allowedMethods="GET" doc:name="Recent Queries Endpoint" doc:id="listener-recent-queries" />
+        
+        <flow-ref name="verify-client-credentials" doc:name="Verify Credentials" doc:id="ref-verify-creds-recent" />
+
+        <!-- Mock recent queries -->
+        <ee:transform doc:name="Build Recent Queries" doc:id="transform-recent-queries">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+[
+    {
+        query: "Where is my order? It has been delayed.",
+        customerId: "CUST-001",
+        intent: "order_status",
+        status: "resolved",
+        timestamp: now()
+    },
+    {
+        query: "Can I return this item?",
+        customerId: "CUST-002",
+        intent: "return",
+        status: "resolved",
+        timestamp: now() - |PT5M|
+    },
+    {
+        query: "What's my loyalty status?",
+        customerId: "CUST-003",
+        intent: "customer_info",
+        status: "resolved",
+        timestamp: now() - |PT10M|
+    }
+]]]></ee:set-payload>
+                </ee:message>
+        </ee:transform>
+
+        <http:response>
+            <http:body>#[payload]</http:body>
+        </http:response>
+    </flow>
+
+    <!-- GET: /api/v1/support/admin/customers -->
+    <flow name="admin-get-customers" doc:id="admin-customers-flow">
+        <http:listener config-ref="HTTP_Listener" path="/api/v1/support/admin/customers" allowedMethods="GET" doc:name="Admin Customers Endpoint" doc:id="listener-admin-customers" />
+        
+        <flow-ref name="verify-client-credentials" doc:name="Verify Credentials" doc:id="ref-verify-creds-admin" />
+
+        <!-- Mock customer list -->
+        <ee:transform doc:name="Build Customer List" doc:id="transform-customer-list">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+[
+    { id: "CUST-001", name: "Vaibhav Kumar", email: "vaibhav@example.com", loyaltyTier: "GOLD", rewardPoints: 5000 },
+    { id: "CUST-002", name: "Sarah Johnson", email: "sarah.j@example.com", loyaltyTier: "SILVER", rewardPoints: 2500 },
+    { id: "CUST-003", name: "Mike Chen", email: "mike.chen@example.com", loyaltyTier: "BRONZE", rewardPoints: 800 }
+]]]></ee:set-payload>
+                </ee:message>
+        </ee:transform>
+
+        <http:response>
+            <http:body>#[payload]</http:body>
+        </http:response>
+    </flow>
+
+    <!-- GET: /api/v1/support/admin/orders -->
+    <flow name="admin-get-orders" doc:id="admin-orders-flow">
+        <http:listener config-ref="HTTP_Listener" path="/api/v1/support/admin/orders" allowedMethods="GET" doc:name="Admin Orders Endpoint" doc:id="listener-admin-orders" />
+        
+        <flow-ref name="verify-client-credentials" doc:name="Verify Credentials" doc:id="ref-verify-creds-admin-orders" />
+
+        <!-- Mock orders list -->
+        <ee:transform doc:name="Build Orders List" doc:id="transform-orders-list">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+[
+    { orderId: "ORD-5521", customerId: "CUST-001", status: "SHIPPED", totalAmount: 249.99, orderDate: "2026-05-20" },
+    { orderId: "ORD-5522", customerId: "CUST-002", status: "DELIVERED", totalAmount: 189.50, orderDate: "2026-05-19" },
+    { orderId: "ORD-5523", customerId: "CUST-003", status: "PROCESSING", totalAmount: 599.99, orderDate: "2026-05-18" }
+]]]></ee:set-payload>
+                </ee:message>
+        </ee:transform>
+
+        <http:response>
+            <http:body>#[payload]</http:body>
+        </http:response>
+    </flow>
+
+</mule>

@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:db="http://www.mulesoft.org/schema/mule/db"
+    xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+    xmlns:http="http://www.mulesoft.org/schema/mule/http"
+    xmlns:file="http://www.mulesoft.org/schema/mule/file"
+    xmlns="http://www.mulesoft.org/schema/mule/core"
+    xmlns:doc="http://www.mulesoft.org/schema/mule/doc"
+    xmlns:spring="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd">
+
+    <!-- ====================================================== -->
+    <!-- DATABASE CONNECTORS FOR SYSTEM APIS -->
+    <!-- ====================================================== -->
+    <db:config name="Database_Config" doc:name="Database Config" doc:id="123abc456">
+        <db:mysql-connection>
+            <db:host>${db.host}</db:host>
+            <db:port>${db.port}</db:port>
+            <db:user>${db.user}</db:user>
+            <db:password>${db.password}</db:password>
+            <db:database>${db.database}</db:database>
+        </db:mysql-connection>
+    </db:config>
+
+    <!-- ====================================================== -->
+    <!-- FLOW: GET CUSTOMER FROM DATABASE -->
+    <!-- ====================================================== -->
+    <flow name="get-customer-from-db" doc:id="get-customer-db-flow">
+        <db:select doc:name="Query Customer by ID" doc:id="query-customer-select">
+            <db:connection-ref ref="Database_Config" />
+            <db:sql>SELECT id, name, email, phone, loyalty_tier, reward_points, total_spending FROM customers WHERE id = :customerId AND is_active = true</db:sql>
+            <db:input-parameters>
+                <db:input-parameter key="customerId">#[payload]</db:input-parameter>
+            </db:input-parameters>
+        </db:select>
+        <choice doc:name="Customer Exists?" doc:id="check-customer-exists">
+            <when expression="#[sizeOf(payload) > 0]">
+                <ee:transform doc:name="Format Customer Response" doc:id="transform-customer-response">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+    customerId: payload[0].id,
+    name: payload[0].name,
+    email: payload[0].email,
+    phone: payload[0].phone,
+    loyaltyTier: payload[0].loyalty_tier,
+    rewardPoints: payload[0].reward_points,
+    totalSpending: payload[0].total_spending,
+    status: "FOUND"
+}]]></ee:set-payload>
+                    </ee:message>
+                </ee:transform>
+            </when>
+            <otherwise>
+                <ee:transform doc:name="Customer Not Found" doc:id="transform-customer-notfound">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+    status: "NOT_FOUND",
+    message: "Customer not found in database"
+}]]></ee:set-payload>
+                    </ee:message>
+                </ee:transform>
+            </otherwise>
+        </choice>
+    </flow>
+
+    <!-- ====================================================== -->
+    <!-- FLOW: GET ORDER FROM DATABASE -->
+    <!-- ====================================================== -->
+    <flow name="get-order-from-db" doc:id="get-order-db-flow">
+        <db:select doc:name="Query Order with Items" doc:id="query-order-select">
+            <db:connection-ref ref="Database_Config" />
+            <db:sql>SELECT o.id, o.customer_id, o.order_date, o.total_amount, o.status, 
+                       o.items_count, o.tracking_number, o.expected_delivery,
+                       json_arrayagg(json_object('productName', oi.product_name, 'quantity', oi.quantity, 'price', oi.price_per_unit)) as items
+                FROM orders o
+                LEFT JOIN order_items oi ON o.id = oi.order_id
+                WHERE o.id = :orderId
+                GROUP BY o.id</db:sql>
+            <db:input-parameters>
+                <db:input-parameter key="orderId">#[payload]</db:input-parameter>
+            </db:input-parameters>
+        </db:select>
+        <choice doc:name="Order Exists?" doc:id="check-order-exists">
+            <when expression="#[sizeOf(payload) > 0]">
+                <ee:transform doc:name="Format Order Response" doc:id="transform-order-response">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+    orderId: payload[0].id,
+    customerId: payload[0].customer_id,
+    orderDate: payload[0].order_date,
+    totalAmount: payload[0].total_amount,
+    status: payload[0].status,
+    itemsCount: payload[0].items_count,
+    trackingNumber: payload[0].tracking_number,
+    expectedDelivery: payload[0].expected_delivery,
+    items: payload[0].items
+}]]></ee:set-payload>
+                    </ee:message>
+                </ee:transform>
+            </when>
+            <otherwise>
+                <ee:transform doc:name="Order Not Found" doc:id="transform-order-notfound">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+    status: "NOT_FOUND",
+    message: "Order not found in database"
+}]]></ee:set-payload>
+                    </ee:message>
+                </ee:transform>
+            </otherwise>
+        </choice>
+    </flow>
+
+    <!-- ====================================================== -->
+    <!-- FLOW: SAVE SUPPORT QUERY TO DATABASE -->
+    <!-- ====================================================== -->
+    <flow name="save-support-query-db" doc:id="save-query-db-flow">
+        <db:insert doc:name="Insert Support Query" doc:id="insert-query">
+            <db:connection-ref ref="Database_Config" />
+            <db:sql>INSERT INTO support_queries (id, session_id, customer_id, query_text, intent, ai_response, resolution_status, created_at)
+                    VALUES (:queryId, :sessionId, :customerId, :queryText, :intent, :aiResponse, 'RESOLVED', NOW())</db:sql>
+            <db:input-parameters>
+                <db:input-parameter key="queryId">#[payload.id]</db:input-parameter>
+                <db:input-parameter key="sessionId">#[payload.sessionId]</db:input-parameter>
+                <db:input-parameter key="customerId">#[payload.customerId]</db:input-parameter>
+                <db:input-parameter key="queryText">#[payload.query]</db:input-parameter>
+                <db:input-parameter key="intent">#[payload.intent]</db:input-parameter>
+                <db:input-parameter key="aiResponse">#[payload.message]</db:input-parameter>
+            </db:input-parameters>
+        </db:insert>
+        <logger level="INFO" doc:name="Log Saved Query" message="Query saved: #[payload]" doc:id="log-saved-query" />
+    </flow>
+
+    <!-- ====================================================== -->
+    <!-- FLOW: SAVE CONVERSATION TO HISTORY -->
+    <!-- ====================================================== -->
+    <flow name="save-conversation-history" doc:id="save-conv-history-flow">
+        <db:insert doc:name="Insert Conversation" doc:id="insert-conversation">
+            <db:connection-ref ref="Database_Config" />
+            <db:sql>INSERT INTO conversation_history (session_id, customer_id, message_role, message_content, created_at)
+                    VALUES (:sessionId, :customerId, :role, :content, NOW())</db:sql>
+            <db:input-parameters>
+                <db:input-parameter key="sessionId">#[payload.sessionId]</db:input-parameter>
+                <db:input-parameter key="customerId">#[payload.customerId]</db:input-parameter>
+                <db:input-parameter key="role">#[payload.role]</db:input-parameter>
+                <db:input-parameter key="content">#[payload.content]</db:input-parameter>
+            </db:input-parameters>
+        </db:insert>
+    </flow>
+
+    <!-- ====================================================== -->
+    <!-- FLOW: GET CONVERSATION HISTORY -->
+    <!-- ====================================================== -->
+    <flow name="get-conversation-history" doc:id="get-conv-history-flow">
+        <db:select doc:name="Query Conversation History" doc:id="query-conv-history">
+            <db:connection-ref ref="Database_Config" />
+            <db:sql>SELECT session_id, message_role, message_content, created_at 
+                    FROM conversation_history 
+                    WHERE session_id = :sessionId 
+                    ORDER BY created_at DESC
+                    LIMIT 20</db:sql>
+            <db:input-parameters>
+                <db:input-parameter key="sessionId">#[payload]</db:input-parameter>
+            </db:input-parameters>
+        </db:select>
+        <ee:transform doc:name="Format Conversation History" doc:id="transform-conv-history">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload map {
+    role: $.message_role,
+    content: $.message_content,
+    timestamp: $.created_at
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+    </flow>
+
+    <!-- ====================================================== -->
+    <!-- FLOW: GET ANALYTICS DATA -->
+    <!-- ====================================================== -->
+    <flow name="get-analytics-data" doc:id="get-analytics-flow">
+        <db:select doc:name="Query Analytics" doc:id="query-analytics">
+            <db:connection-ref ref="Database_Config" />
+            <db:sql>SELECT date, total_queries, resolved_queries, 
+                       avg_resolution_minutes, customer_satisfaction_rate 
+                    FROM ai_analytics 
+                    WHERE date >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+                    ORDER BY date DESC</db:sql>
+        </db:select>
+        <ee:transform doc:name="Format Analytics Response" doc:id="transform-analytics">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload map {
+    date: $.date,
+    totalQueries: $.total_queries,
+    resolvedQueries: $.resolved_queries,
+    avgResolutionTime: $.avg_resolution_minutes,
+    satisfactionRate: $.customer_satisfaction_rate
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+    </flow>
+
+</mule>

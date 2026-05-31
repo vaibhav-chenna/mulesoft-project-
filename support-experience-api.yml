@@ -1,0 +1,71 @@
+#%RAML 1.0
+title: AI-Powered Customer Support Experience API
+version: v1
+protocols: [ HTTPS ]
+mediaType: [ application/json ]
+
+traits:
+  client-id-required:
+    headers:
+      client_id:
+        type: string
+        required: true
+        example: "83dca9283e744bfa91a273bde283921a"
+      client_secret:
+        type: string
+        required: true
+        example: "92FCA38291a348BBA91238CDE283192A"
+  error-responses:
+    responses:
+      400:
+        body:
+          application/json:
+            example: {"status": "ERROR", "message": "Bad Request"}
+      500:
+        body:
+          application/json:
+            example: {"status": "ERROR", "message": "Internal Server Error"}
+
+/health:
+  get:
+    description: Simple health check endpoint
+    responses:
+      200:
+        body:
+          application/json:
+            example: {"status": "UP", "timestamp": "2026-05-25T21:26:21Z"}
+
+/customers/{id}:
+  is: [client-id-required, error-responses]
+  get:
+    description: Retrieve specific customer profile details
+    responses:
+      200:
+        body:
+          application/json:
+            example:
+              customerId: "CUST-9921"
+              name: "Vaibhav"
+              email: "vaibhav@example.com"
+
+/support/query:
+  is: [client-id-required, error-responses]
+  post:
+    description: Accepts unstructured customer queries, processes via AI engine, and routes accordingly.
+    body:
+      application/json:
+        properties:
+          query:
+            type: string
+            required: true
+            example: "Where is my order? It has been delayed."
+          customerId:
+            type: string
+            required: false
+            example: "CUST-9921"
+    responses:
+      200:
+        body:
+          application/json:
+            example:
+              message: "Hello Vaibhav, your order #ORD-5521 is currently out for delivery and is expected to arrive by 4:00 PM today."

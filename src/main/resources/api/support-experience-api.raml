@@ -1,0 +1,246 @@
+#%RAML 1.0
+title: AI Support Experience API
+version: v1.0
+baseUri: /api/v1/support
+protocols: [ HTTPS, HTTP ]
+mediaType: application/json
+
+documentation:
+  - title: API Overview
+    content: |
+      AI-Powered Customer Support API for handling customer queries intelligently.
+      This is the Experience API that exposes customer-facing endpoints.
+
+types:
+  CustomerQuery:
+    type: object
+    properties:
+      query:
+        type: string
+        required: true
+        description: Customer's support query
+      customerId:
+        type: string
+        required: false
+        description: Optional customer ID for personalized responses
+      context:
+        type: string
+        required: false
+        description: Additional context about the query
+
+  SupportResponse:
+    type: object
+    properties:
+      requestId:
+        type: string
+        description: Unique request identifier
+      intent:
+        type: string
+        description: Detected user intent (order_status, customer_info, complaint, general)
+      message:
+        type: string
+        description: Response message from AI or system
+      data:
+        type: object
+        required: false
+        description: Additional data if applicable (order details, customer info, etc.)
+      timestamp:
+        type: string
+        description: Response timestamp
+
+  Customer:
+    type: object
+    properties:
+      id:
+        type: string
+        required: true
+      name:
+        type: string
+        required: true
+      email:
+        type: string
+        required: true
+      phone:
+        type: string
+      loyaltyTier:
+        type: string
+        enum: [BRONZE, SILVER, GOLD, PLATINUM]
+
+  Order:
+    type: object
+    properties:
+      orderId:
+        type: string
+        required: true
+      customerId:
+        type: string
+        required: true
+      orderDate:
+        type: string
+      status:
+        type: string
+        enum: [PENDING, PROCESSING, SHIPPED, DELIVERED, CANCELLED]
+      totalAmount:
+        type: number
+      items:
+        type: array
+
+  HealthCheck:
+    type: object
+    properties:
+      status:
+        type: string
+        enum: [UP, DOWN]
+      timestamp:
+        type: string
+      version:
+        type: string
+
+  ErrorResponse:
+    type: object
+    properties:
+      errorCode:
+        type: string
+      errorMessage:
+        type: string
+      timestamp:
+        type: string
+      requestId:
+        type: string
+
+/health:
+  displayName: Health Check
+  description: Health check endpoint to verify API is running
+  get:
+    displayName: Get Health Status
+    description: Returns the health status of the API
+    responses:
+      200:
+        body:
+          application/json:
+            type: HealthCheck
+            example: |
+              {
+                "status": "UP",
+                "timestamp": "2026-05-25T13:30:00Z",
+                "version": "1.0.0"
+              }
+
+/query:
+  displayName: Support Query Endpoint
+  description: Submit customer support queries with AI processing
+  post:
+    displayName: Submit Support Query
+    description: |
+      Submit a customer query that will be processed by AI to detect intent
+      and route to appropriate systems
+    body:
+      application/json:
+        type: CustomerQuery
+        example: |
+          {
+            "query": "Where is my order?",
+            "customerId": "CUST12345",
+            "context": "Regarding order placed on 2026-05-20"
+          }
+    responses:
+      200:
+        description: Query processed successfully
+        body:
+          application/json:
+            type: SupportResponse
+            example: |
+              {
+                "requestId": "REQ-2026-001234",
+                "intent": "order_status",
+                "message": "Your order #ORD123456 is out for delivery and expected to arrive on May 25, 2026",
+                "data": {
+                  "orderId": "ORD123456",
+                  "status": "SHIPPED",
+                  "trackingNumber": "TRK987654"
+                },
+                "timestamp": "2026-05-25T13:30:00Z"
+              }
+      400:
+        description: Invalid request
+        body:
+          application/json:
+            type: ErrorResponse
+      500:
+        description: Internal server error
+        body:
+          application/json:
+            type: ErrorResponse
+
+/customer/{customerId}:
+  displayName: Customer Information
+  description: Retrieve customer information
+  get:
+    displayName: Get Customer Details
+    description: Retrieve customer details by ID
+    uriParameters:
+      customerId:
+        type: string
+        required: true
+        description: Customer ID
+    responses:
+      200:
+        body:
+          application/json:
+            type: Customer
+            example: |
+              {
+                "id": "CUST12345",
+                "name": "John Doe",
+                "email": "john.doe@example.com",
+                "phone": "+1-555-0123",
+                "loyaltyTier": "GOLD"
+              }
+      404:
+        body:
+          application/json:
+            type: ErrorResponse
+            example: |
+              {
+                "errorCode": "CUSTOMER_NOT_FOUND",
+                "errorMessage": "Customer with ID CUST12345 not found",
+                "timestamp": "2026-05-25T13:30:00Z",
+                "requestId": "REQ-2026-001234"
+              }
+
+/order/{orderId}:
+  displayName: Order Information
+  description: Retrieve order information
+  get:
+    displayName: Get Order Details
+    description: Retrieve order details by ID
+    uriParameters:
+      orderId:
+        type: string
+        required: true
+        description: Order ID
+    responses:
+      200:
+        body:
+          application/json:
+            type: Order
+            example: |
+              {
+                "orderId": "ORD123456",
+                "customerId": "CUST12345",
+                "orderDate": "2026-05-20T10:00:00Z",
+                "status": "SHIPPED",
+                "totalAmount": 299.99,
+                "items": [
+                  {
+                    "sku": "SKU-001",
+                    "name": "Premium Headphones",
+                    "quantity": 1,
+                    "price": 299.99
+                  }
+                ]
+              }
+      404:
+        body:
+          application/json:
+            type: ErrorResponse

@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns="http://www.mulesoft.org/schema/mule/core"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xmlns:http="http://www.mulesoft.org/schema/mule/http"
+      xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+      xsi:schemaLocation="
+      http://www.mulesoft.org/schema/mule/core 
+      http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+      http://www.mulesoft.org/schema/mule/http 
+      http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+      http://www.mulesoft.org/schema/mule/ee/core
+      http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+
+    <!-- Mock Customer Database -->
+    <configuration doc:name="Global Configuration">
+        <expression-language>
+            <global-functions>
+                <![CDATA[
+                    // Mock Customer Database
+                    fun getCustomerFromDB(customerId) = {
+                        'CUST12345': {
+                            'id': 'CUST12345',
+                            'name': 'John Doe',
+                            'email': 'john.doe@example.com',
+                            'phone': '+1-555-0123',
+                            'loyaltyTier': 'GOLD',
+                            'rewardPoints': 2500,
+                            'registrationDate': '2024-01-15'
+                        },
+                        'CUST67890': {
+                            'id': 'CUST67890',
+                            'name': 'Jane Smith',
+                            'email': 'jane.smith@example.com',
+                            'phone': '+1-555-0456',
+                            'loyaltyTier': 'SILVER',
+                            'rewardPoints': 1200,
+                            'registrationDate': '2024-03-20'
+                        },
+                        'CUST11111': {
+                            'id': 'CUST11111',
+                            'name': 'Bob Johnson',
+                            'email': 'bob.johnson@example.com',
+                            'phone': '+1-555-0789',
+                            'loyaltyTier': 'BRONZE',
+                            'rewardPoints': 300,
+                            'registrationDate': '2025-06-10'
+                        }
+                    }[customerId];
+
+                    // Mock Order Database
+                    fun getOrderFromDB(orderId) = {
+                        'ORD123456': {
+                            'orderId': 'ORD123456',
+                            'customerId': 'CUST12345',
+                            'orderDate': '2026-05-20T10:00:00Z',
+                            'status': 'SHIPPED',
+                            'totalAmount': 299.99,
+                            'trackingNumber': 'TRK987654',
+                            'estimatedDelivery': '2026-05-25',
+                            'items': [
+                                {
+                                    'sku': 'SKU-001',
+                                    'name': 'Premium Headphones',
+                                    'quantity': 1,
+                                    'unitPrice': 299.99
+                                }
+                            ]
+                        },
+                        'ORD654321': {
+                            'orderId': 'ORD654321',
+                            'customerId': 'CUST67890',
+                            'orderDate': '2026-05-18T14:30:00Z',
+                            'status': 'DELIVERED',
+                            'totalAmount': 159.98,
+                            'trackingNumber': 'TRK456123',
+                            'estimatedDelivery': '2026-05-23',
+                            'deliveryDate': '2026-05-23T16:45:00Z',
+                            'items': [
+                                {
+                                    'sku': 'SKU-002',
+                                    'name': 'USB-C Cable (2-pack)',
+                                    'quantity': 2,
+                                    'unitPrice': 79.99
+                                }
+                            ]
+                        },
+                        'ORD999999': {
+                            'orderId': 'ORD999999',
+                            'customerId': 'CUST12345',
+                            'orderDate': '2026-05-22T09:15:00Z',
+                            'status': 'PROCESSING',
+                            'totalAmount': 749.99,
+                            'trackingNumber': null,
+                            'estimatedDelivery': '2026-05-28',
+                            'items': [
+                                {
+                                    'sku': 'SKU-003',
+                                    'name': 'Wireless Mouse',
+                                    'quantity': 1,
+                                    'unitPrice': 49.99
+                                },
+                                {
+                                    'sku': 'SKU-004',
+                                    'name': 'Mechanical Keyboard',
+                                    'quantity': 1,
+                                    'unitPrice': 149.99
+                                },
+                                {
+                                    'sku': 'SKU-005',
+                                    'name': 'Monitor Stand',
+                                    'quantity': 2,
+                                    'unitPrice': 275.01
+                                }
+                            ]
+                        }
+                    }[orderId];
+                ]]>
+            </global-functions>
+        </expression-language>
+    </configuration>
+
+    <!-- System API: Get Customer -->
+    <sub-flow name="get-customer-system-flow" doc:name="Get Customer System Flow">
+        <logger level="INFO" message="System API: Fetching customer ID: #[vars.customerId]" doc:name="Log"/>
+        
+        <choice doc:name="Validate Customer ID">
+            <when expression="#[!vars.customerId or vars.customerId == '']">
+                <set-payload value="#[{errorCode: 'INVALID_CUSTOMER_ID', errorMessage: 'Customer ID is required', timestamp: now() as String {format: 'yyyy-MM-dd HH:mm:ss'}, requestId: vars.requestId}]" doc:name="Set Error"/>
+                <set-attribute attributeName="http.status" value="400" doc:name="Set Status 400"/>
+                <raise-error type="VALIDATION" message="Customer ID is required" doc:name="Raise Validation Error"/>
+            </when>
+        </choice>
+
+        <!-- In real scenario, this would call a database or backend system -->
+        <!-- For this demo, we use mock data from global functions -->
+        <set-payload value="#[getCustomerFromDB(vars.customerId)]" doc:name="Get Customer from Mock DB"/>
+        
+        <!-- Verify customer exists -->
+        <choice doc:name="Customer Found?">
+            <when expression="#[payload == null]">
+                <logger level="WARN" message="Customer not found: #[vars.customerId]" doc:name="Log"/>
+                <set-payload value="#[{errorCode: 'CUSTOMER_NOT_FOUND', errorMessage: 'Customer with ID ' ++ vars.customerId ++ ' not found', timestamp: now() as String {format: 'yyyy-MM-dd HH:mm:ss'}, requestId: vars.requestId}]" doc:name="Set Error"/>
+                <set-attribute attributeName="http.status" value="404" doc:name="Set Status 404"/>
+                <raise-error type="NOT_FOUND" message="Customer not found" doc:name="Raise Not Found"/>
+            </when>
+            <otherwise>
+                <logger level="INFO" message="Customer found: #[payload.name]" doc:name="Log Success"/>
+                <set-attribute attributeName="http.status" value="200" doc:name="Set Status 200"/>
+            </otherwise>
+        </choice>
+    </sub-flow>
+
+    <!-- System API: Get Order -->
+    <sub-flow name="get-order-system-flow" doc:name="Get Order System Flow">
+        <logger level="INFO" message="System API: Fetching order ID: #[vars.orderId]" doc:name="Log"/>
+        
+        <choice doc:name="Validate Order ID">
+            <when expression="#[!vars.orderId or vars.orderId == '']">
+                <set-payload value="#[{errorCode: 'INVALID_ORDER_ID', errorMessage: 'Order ID is required', timestamp: now() as String {format: 'yyyy-MM-dd HH:mm:ss'}, requestId: vars.requestId}]" doc:name="Set Error"/>
+                <set-attribute attributeName="http.status" value="400" doc:name="Set Status 400"/>
+                <raise-error type="VALIDATION" message="Order ID is required" doc:name="Raise Validation Error"/>
+            </when>
+        </choice>
+
+        <!-- Get order from mock database -->
+        <set-payload value="#[getOrderFromDB(vars.orderId)]" doc:name="Get Order from Mock DB"/>
+        
+        <!-- Verify order exists -->
+        <choice doc:name="Order Found?">
+            <when expression="#[payload == null]">
+                <logger level="WARN" message="Order not found: #[vars.orderId]" doc:name="Log"/>
+                <set-payload value="#[{errorCode: 'ORDER_NOT_FOUND', errorMessage: 'Order with ID ' ++ vars.orderId ++ ' not found', timestamp: now() as String {format: 'yyyy-MM-dd HH:mm:ss'}, requestId: vars.requestId}]" doc:name="Set Error"/>
+                <set-attribute attributeName="http.status" value="404" doc:name="Set Status 404"/>
+                <raise-error type="NOT_FOUND" message="Order not found" doc:name="Raise Not Found"/>
+            </when>
+            <otherwise>
+                <logger level="INFO" message="Order found: #[payload.orderId], Status: #[payload.status]" doc:name="Log Success"/>
+                <set-attribute attributeName="http.status" value="200" doc:name="Set Status 200"/>
+            </otherwise>
+        </choice>
+    </sub-flow>
+
+</mule>
