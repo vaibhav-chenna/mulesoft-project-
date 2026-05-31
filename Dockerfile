@@ -32,4 +32,4 @@ EXPOSE ${APP_PORT}
 WORKDIR $MULE_HOME
 
 # Start the Mule runtime in foreground console mode
-CMD ["sh", "-c", "./bin/mule -M -Dhttp.port=${PORT:-8081}"]
+CMD ["sh", "-c", "./bin/mule -M -Dhttp.port=${PORT:-8086}"]
