@@ -3,13 +3,17 @@
 .project
 .settings/
 bin/
-target/
 .DS_Store
 *.class
-*.jar
 *.war
 *.ear
 *.log
+
+# Ignore target directory but allow compiled app jar in root
+target/
+*.jar
+# BUT: Allow the compiled Mule application JAR in the root directory
+!ai-support-api-*.jar
 node_modules/
 .idea/
 *.swp
